@@ -1,4 +1,4 @@
 .project
-admin/node_modules/node-gyp
-admin/node_modules/socket.io
-admin/node_modules/yamljs
+admin/node_modules/node-gyp/*
+admin/node_modules/socket.io/*
+admin/node_modules/yamljs/*
