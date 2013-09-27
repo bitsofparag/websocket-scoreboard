@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>Cleartrip Events Scoreboard</title>
+<style>
+/*ALTER THE VALUES INDICATED TO CUSTOMIZE THE DEFAULT SETTINGS*/
+body{
+	font-family:Helvetica, Arial, sans-serif;
+}
+#header {width:1250px; background-color:#999;}
+#wrapper {width:100%; margin-left:auto; margin-right:auto;overflow:auto;}
+.boardContainer{
+	width:25%; 
+	float:left;
+}
+.board{
+	font-size:2000%; /*<-- TO CHANGE LEFT PANEL FONT SIZE*/ 
+	text-align:center;
+	border: 1px solid white
+}
+#bheem, #team1 {
+	background-color:rgb(250,250,250); /*<-- TO CHANGE LEFT PANEL BG COLOR*/ 
+}
+#avengers, #team2 {
+	background-color:rgb(0,180,255); /*<-- TO CHANGE RIGHT PANEL BG COLOR*/ 
+}
+#hulks, #team3 {
+	background-color:rgb(195,255,104);
+	/*background-color: rgb(202,232,162) /* green tea */
+	/*background-color: rgb(217,255,169) /* Eden shining */
+}
+#shaktimaan, #team4 {
+	background-color:rgb(255,51,51);
+	/*background-color: rgb(163,19,32) */ 
+}
+
+.add, .remove, .pass{
+	background-color: black; color: white; border: none;font-size: 200%;font-weight:bold;width: 40px;cursor:pointer
+}
+.add:hover{
+	background-color: rgb(30,190,57);
+}
+.remove:hover{
+	background-color: rgb(240,35,17)
+}
+.pass:hover{
+	background-color: rgb(251,184,41)
+}
+
+#adminControls{margin: 60px auto 10px; width: 100%}
+.endGame,.startGame,.endedGame, .startedGame{
+	background-color: black; color: white; border: none;width: 120px;cursor:pointer;font-size: 120%;
+}
+.startedGame{
+	background-color: rgb(30,190,57);
+}
+.endedGame{
+	background-color: rgb(240,35,17)
+}
+#footer {width:100%; background-color:#999; margin-left:auto; margin-right:auto; font-family:Arial, Helvetica, sans-serif; font-size:12px;}
+
+</style>
+
+<style>[touch-action="none"]{ -ms-touch-action: none; touch-action: none; }[touch-action="pan-x"]{ -ms-touch-action: pan-x; touch-action: pan-x; }[touch-action="pan-y"]{ -ms-touch-action: pan-y; touch-action: pan-y; }[touch-action="scroll"],[touch-action="pan-x pan-y"],[touch-action="pan-y pan-x"]{ -ms-touch-action: pan-x pan-y; touch-action: pan-x pan-y; }</style></head>
+
+
+
+<body>
+
+<audio id="audiotag1" src="click.wav" preload="auto" loop>&nbsp;</audio>
+
+<div id="wrapper">
+	<div class="boardContainer">
+		<h2>Team 1</h2>
+		<div id="team1" class="board">
+			<b>-</b>
+		</div> 
+		<button type="submit" class="add">+</button>
+		<button type="submit" class="remove">-</button>
+		<button type="submit" class="pass">?</button>
+	</div>
+	
+	<div class="boardContainer">
+		<h2>Team 2</h2>
+		<div id="team2" class="board">
+			<b>-</b>
+		</div> 
+		<button type="submit" class="add">+</button>
+		<button type="submit" class="remove">-</button>
+		<button type="submit" class="pass">?</button>
+	</div>
+	
+	<div class="boardContainer">
+		<h2>Team 3</h2>
+		<div id="team3" class="board">
+			<b>-</b>
+		</div>
+		<button type="submit" class="add">+</button>
+		<button type="submit" class="remove">-</button>
+		<button type="submit" class="pass">?</button>
+	</div>
+	
+	<div class="boardContainer">
+		<h2>Team 4</h2>
+		<div id="team4" class="board">
+			<b>-</b>
+		</div>
+		<button type="submit" class="add">+</button>
+		<button type="submit" class="remove">-</button>
+		<button type="submit" class="pass">?</button>
+	</div>
+
+</div> <!-- end wrapper -->
+
+<div id="adminControls">
+	<button type="submit" class="startGame">Start Game</button>
+	<button type="submit" class="endGame">End Game</button>
+</div>
+
+<div id="timestamp"></div>
+<div id="footer"></div> <!-- end footer -->
+
+<script type="text/template" id="ScoreTpl">
+	<div class="boardContainer">
+		<h2>{{team}}</h2>
+		<div id="{{teamName}}" class="board">
+			<b id="boldStuff_1">{{score}}</b>
+		</div>
+		<button type="submit" class="add">+</button>
+		<button type="submit" class="remove">-</button>
+		<button type="submit" class="pass">?</button>
+	</div>
+</script>
+</body>
+<script src="/socket.io/socket.io.js"></script>
+<script src="moment.min.js"></script>
+<script>
+	/**
+	 *  Lib script
+	 */
+	var _slice = Array.prototype.slice 
+
+	!function(){
+		// ================================================================================
+		/* DOM engine */
+		window.$ = function(sel, context){
+			return new $.prototype._init(sel, context)
+		}
+		
+		$.prototype = {
+			constructor : $,
+			
+			_init : function(sel, context){
+				this.sel = sel
+				this.parent = context || document
+				this.nodes = (sel[0] === '#')? [document.getElementById(sel.replace('#', ''))] : _slice.call(this.parent.querySelectorAll(sel))
+			},
+			
+			setScore : function(value, App, websocket){
+				if(App.start){
+					var _scores = App.scores.teams;
+					this.nodes.forEach(function(node){
+						var actualScore = _scores[node.id].total + value
+						if(actualScore < 0) actualScore = 0
+						node.innerHTML = _scores[node.id].total = actualScore
+					})
+					websocket.emit('scores', {msg : 'write', data : App.scores })
+				}
+				return this
+			},
+			
+			on : function(evtName, handler){
+				this.nodes.forEach(function(node){
+					node.addEventListener(evtName, handler, false)
+				})
+				return this
+			},
+			
+			off : function(evtName, handler){
+				this.nodes.forEach(function(node){
+					node.removeEventListener(evtName, handler, false)
+				})
+				return this
+			},
+			
+			html : function(str){
+				this.nodes.forEach(function(node){
+					if(typeof str === 'undefined') ret = node.innerHTML
+					else node.innerHTML = str
+				})
+				return typeof str === 'undefined'? ret : this
+			}
+		}
+		
+		$.prototype._init.prototype = $.prototype
+		/* DOM engine */
+		// ================================================================
+	}()
+</script>
+<script>
+	/**
+	 * Execution script
+	 */
+	!function(){
+		var App = { 
+			start : false,
+			scores: {}
+		}
+		
+		var updateScores = function(updatedScores){
+			App.scores = updatedScores
+			var teams = updatedScores.teams, html = ''
+			for (team in teams){
+				html += scoreTpl.replace(/{{teamName}}/g, team).replace('{{score}}', teams[team].total).replace('{{team}}', teams[team].name)
+			}
+			$('#wrapper').html(html)
+			$('#timestamp').html('<p>Scores last updated on: ' + moment(updatedScores.updated_at).format('DD MMM hh:mm:ss') + '</p>')
+		}
+		
+		var updateScoreBoard = function(e){
+			e.preventDefault()
+			document.getElementById('audiotag1').play()
+			var score = 0
+			var parent = this.parentNode
+			switch(this.className){
+				case 'add' : score = 1; break;
+				case 'remove' : score = -1; break;
+				case 'pass' : score = 0; break;
+				default : break;
+			}
+			$('.board', parent).setScore(score, App, socket)
+		}
+		
+		var bindEvents = function(bool){
+			$('.add, .remove, .pass')[typeof bool === 'undefined'? 'on' : 'off']('click', updateScoreBoard)	
+		}
+		
+		var init = function(el){
+			App.start = true
+			bindEvents()
+			el.innerHTML = "Game started..."
+			el.className = 'startedGame'
+		}
+		
+		var saveAndEnd = function(el){
+			App.start = false
+			bindEvents(false)
+			socket.emit('scores', {msg : 'write', data : App.scores})
+			el.innerHTML = "Ending game..."
+			el.previousElementSibling.innerHTML = "Start game"
+			el.previousElementSibling.className = "startGame"
+			setTimeout(function(){
+				el.innerHTML = "End Game"
+			}, 200)
+		}
+		
+		var regulateGame = function(e){
+			var button = e.target
+			switch(button.className){
+				case 'startGame' : init(button); break;
+				case 'endGame' : if(App.start) saveAndEnd(button); break;
+				default : break;
+			}
+		}
+
+
+
+		var scoreTpl = $('#ScoreTpl').html()
+		$('#adminControls').on('click', regulateGame)
+		
+		var socket = io.connect('http://localhost:1337'); // connect to admin
+	    socket.emit('scores', {msg : 'read'});
+	    socket.on('getScores', updateScores)
+	    
+	}()
+</script>
+</html>

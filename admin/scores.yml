@@ -1,0 +1,19 @@
+teams:
+  bheem:
+    name: Bheem
+    total: 4
+    pass: 0
+  avengers:
+    name: Avengers
+    total: 4
+    pass: 0
+  shaktimaan:
+    name: Shaktimaan
+    total: 7
+    pass: 0
+  hulks:
+    name: 'Smashing Hulks'
+    total: 3
+    pass: 0
+updated_at: 2013-09-27T08:55:07.812Z
+accessed_at: 1380271552611
