@@ -18,4 +18,4 @@ The app provides two different interfaces. One is an admin screen where the game
 **Open admin interface as "localhost:1337"**
 **Open client scoreboard from a different computer**
 
-![alt tag](https://github.com/paragmajum/websocket-scoreboard/blob/master/img/websockets-scoreboard.jpg)
+![alt tag](https://raw.github.com/paragmajum/websocket-scoreboard/master/img/websockets-scoreboard.jpg)
